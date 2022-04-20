@@ -7,6 +7,9 @@ import sys
 import subprocess
 import os
 import ast
+import pygame
+import pygame.camera
+import time
 
 THIS_SCRIPT = os.path.realpath(__file__)
 KEY_K = 45
@@ -36,13 +39,24 @@ def grab():
 
 # Grabs both keyboard and mouse pointer until Ctrl+Alt+K is pressed.
 def catlock():
+    counter = 0
+    pygame.camera.init()
+    cam = pygame.camera.Camera('/dev/video0', (640, 480))
+    cam.start()
     with grab():
         while True:
             ev = root.display.next_event()
-            if ev.type == X.KeyPress:
-                if ev.state & X.ControlMask and ev.state & X.Mod1Mask:
-                    if ev.detail == KEY_K:
-                        return
+            if ev.type == X.KeyPress and ev.state & X.ControlMask and ev.state & X.Mod1Mask and ev.detail == KEY_K:
+                return
+            else:
+                counter += 1
+                if counter % 10 == 0:
+                    print(counter / 10)
+                    img = cam.get_image()
+                    file_name = time.strftime('%d%m-%H%M%S') + '.jpg'
+                    pygame.image.save(img, file_name)
+                    os.system('timeout 5 pqiv ~/workspace/catlock/image.jpg -fz 3')
+
 
 
 # https://askubuntu.com/a/597414
@@ -82,13 +96,13 @@ def set_keyboard_shortcut(name, command, binding):
 # Installs a GNOME settings global keyboard shortcut that will run this script
 # (and therefore lock keyboard/mouse) when Ctrl+Alt+K is pressed.
 def install():
-    print("Installing Ctrl+Alt+K shortcut")
-    set_keyboard_shortcut("Cat Lock", THIS_SCRIPT, "<Ctrl><Alt>K")
+    print("Installing Ctrl+Alt+J shortcut")
+    set_keyboard_shortcut("Cat Lock", THIS_SCRIPT, "<Ctrl><Alt>J")
 
 
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == 'install':
         install()
     else:
-        print("Press Ctrl+Alt+K to release grab.")
+        #print("Press Ctrl+Alt+K to release grab.")
         catlock()
